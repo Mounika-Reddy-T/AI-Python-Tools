@@ -18,7 +18,8 @@ JSON format:
 """
 
 
-def build_prompt(context: str, question: str):
+def build_prompt(context: str, question: str) -> str:
+    """Build user prompt with context and question."""
 
     return f"""
 Context:
