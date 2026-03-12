@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 
-API_ENDPOINT = "http://localhost:8000/analyze-document"
+API_ENDPOINT = "http://localhost:8002/analyze-document"
 
 st.set_page_config(
     page_title="AI Text Insight Tool",
