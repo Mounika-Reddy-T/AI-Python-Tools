@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Context Q&A Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.8em;
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .input-group {
+            margin-bottom: 30px;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .input-group textarea {
+            width: 100%;
+            padding: 20px;
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            font-size: 1em;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s ease;
+        }
+
+        .input-group textarea:focus {
+            outline: none;
+            border-color: #00b894;
+            box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.1);
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 18px;
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #00b894;
+            box-shadow: 0 0 0 3px rgba(0, 184, 148, 0.1);
+        }
+
+        .context-textarea {
+            min-height: 200px;
+        }
+
+        .question-input {
+            font-weight: 500;
+        }
+
+        .ask-btn {
+            background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
+            color: white;
+            border: none;
+            padding: 18px 40px;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-bottom: 30px;
+        }
+
+        .ask-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.2);
+        }
+
+        .ask-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 30px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #00b894;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 15px;
+            margin-top: 20px;
+        }
+
+        .result-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .result-status {
+            padding: 8px 20px;
+            border-radius: 25px;
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-right: 15px;
+        }
+
+        .status-found {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-not-found {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .result-section {
+            margin-bottom: 25px;
+        }
+
+        .result-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+            display: flex;
+            align-items: center;
+        }
+
+        .result-section h3::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: #00b894;
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+
+        .result-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #e1e5e9;
+            font-size: 1.05em;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .source-text {
+            background: #e8f4fd;
+            border-left: 4px solid #74b9ff;
+        }
+
+        .answer-text {
+            background: #e8f5e8;
+            border-left: 4px solid #00b894;
+        }
+
+        .not-found-text {
+            background: #ffeaa7;
+            border-left: 4px solid #fdcb6e;
+            color: #6c5ce7;
+            font-style: italic;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            border: 1px solid #f5c6cb;
+            display: none;
+        }
+
+        .example-section {
+            background: #f1f3f4;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+        }
+
+        .example-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .example-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid #74b9ff;
+        }
+
+        .example-label {
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+        }
+
+        .example-text {
+            color: #666;
+            font-size: 0.95em;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #666;
+            font-size: 0.9em;
+            background: #f8f9fa;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+            
+            .main-content {
+                padding: 20px;
+            }
+            
+            .header {
+                padding: 30px 20px;
+            }
+            
+            .header h1 {
+                font-size: 2.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤔 Context Q&A Tool</h1>
+            <p>Ask questions about your documents and get precise answers based strictly on the provided context</p>
+        </div>
+
+        <div class="main-content">
+            <div class="example-section">
+                <h3>💡 How it works:</h3>
+                <div class="example-item">
+                    <div class="example-label">Context:</div>
+                    <div class="example-text">"Alice joined the company in 2022 and works in product development."</div>
+                </div>
+                <div class="example-item">
+                    <div class="example-label">Question:</div>
+                    <div class="example-text">"When did Alice join the company?"</div>
+                </div>
+                <div class="example-item">
+                    <div class="example-label">Answer:</div>
+                    <div class="example-text">"Alice joined the company in 2022."</div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="contextText">📄 Context (Paste your document or text):</label>
+                <textarea 
+                    id="contextText" 
+                    class="context-textarea"
+                    placeholder="Paste your document, article, meeting notes, or any text that contains the information you want to ask about...&#10;&#10;Example:&#10;Alice joined the company in 2022 and works in product development. She leads a team of 5 engineers and has been working on the new mobile app project since January. The project is scheduled to launch in Q2 2024 with a budget of $500,000."
+                ></textarea>
+            </div>
+
+            <div class="input-group">
+                <label for="questionText">❓ Your Question:</label>
+                <input 
+                    type="text" 
+                    id="questionText" 
+                    class="question-input"
+                    placeholder="What would you like to know about the context above?"
+                />
+            </div>
+
+            <button class="ask-btn" id="askBtn" onclick="askQuestion()">
+                🔍 Ask Question
+            </button>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing context and finding your answer...</p>
+            </div>
+
+            <div class="error" id="error"></div>
+
+            <div class="results" id="results">
+                <div class="result-header">
+                    <div class="result-status" id="statusBadge"></div>
+                    <h2>Analysis Results</h2>
+                </div>
+
+                <div class="result-section">
+                    <h3>❓ Your Question</h3>
+                    <div class="result-content" id="questionResult"></div>
+                </div>
+
+                <div class="result-section">
+                    <h3>💬 Answer</h3>
+                    <div class="result-content answer-text" id="answerResult"></div>
+                </div>
+
+                <div class="result-section" id="sourceSection">
+                    <h3>📝 Source Text</h3>
+                    <div class="result-content source-text" id="sourceResult"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>Powered by OpenRouter API • Precise context-based question answering</p>
+        </div>
+    </div>
+
+    <script>
+        async function askQuestion() {
+            const context = document.getElementById('contextText').value.trim();
+            const question = document.getElementById('questionText').value.trim();
+            
+            if (!context) {
+                showError('Please provide some context text');
+                return;
+            }
+
+            if (!question) {
+                showError('Please enter a question');
+                return;
+            }
+
+            showLoading(true);
+            hideError();
+            hideResults();
+
+            try {
+                const response = await fetch('http://localhost:8001/ask', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        context: context,
+                        question: question 
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayResults(data, question);
+
+            } catch (error) {
+                showError(`Error: ${error.message}`);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function displayResults(data, question) {
+            // Display question
+            document.getElementById('questionResult').textContent = question;
+
+            // Display answer
+            const answerElement = document.getElementById('answerResult');
+            answerElement.textContent = data.answer;
+            
+            // Update answer styling based on whether answer was found
+            if (data.found) {
+                answerElement.className = 'result-content answer-text';
+            } else {
+                answerElement.className = 'result-content not-found-text';
+            }
+
+            // Display status badge
+            const statusBadge = document.getElementById('statusBadge');
+            if (data.found) {
+                statusBadge.textContent = '✅ Answer Found';
+                statusBadge.className = 'result-status status-found';
+            } else {
+                statusBadge.textContent = '❌ Not in Context';
+                statusBadge.className = 'result-status status-not-found';
+            }
+
+            // Display source text (only if found)
+            const sourceSection = document.getElementById('sourceSection');
+            if (data.found && data.source_text) {
+                document.getElementById('sourceResult').textContent = data.source_text;
+                sourceSection.style.display = 'block';
+            } else {
+                sourceSection.style.display = 'none';
+            }
+
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('askBtn').disabled = show;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error').style.display = 'none';
+        }
+
+        function hideResults() {
+            document.getElementById('results').style.display = 'none';
+        }
+
+        // Enter key support for question input
+        document.getElementById('questionText').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                askQuestion();
+            }
+        });
+
+        // Auto-resize textarea
+        document.getElementById('contextText').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.max(200, this.scrollHeight) + 'px';
+        });
+    </script>
+</body>
+</html>
